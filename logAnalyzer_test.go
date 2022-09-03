@@ -3,18 +3,20 @@ package ch5
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	// "github.com/stretchr/testify/assert"
+	"github.com/golang/mock/gomock"
 )
 
 func Test_TooShortFileNameShouldLogError(t *testing.T) {
-	fw := &FakeWebService{}  // 建立假物件
-	la := NewLogAnalyzer(fw)
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+	mockIWebService := NewMockIWebService(ctl)
+	expected := "File name too short: " + "abc.txt"
+	gomock.InOrder(
+		mockIWebService.EXPECT().LogError(expected),
+	)
+	la := NewLogAnalyzer(mockIWebService)
 
 	tooShortFileName := "abc.txt"
 	la.Analyze(tooShortFileName)
-	
-	expected := "File name too short: " + "abc.txt"
-	actual := fw.lastError
-
-	assert.Equal(t, expected, actual, "they should be equal")  // 把假物件當模擬物件來使用並驗證
 }
