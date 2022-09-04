@@ -1,5 +1,7 @@
 package ch5
 
+import "ch5/er"
+
 type IWebService interface {
-	LogError(message string) error
+	LogError(message *er.ErrorInfo) error
 }

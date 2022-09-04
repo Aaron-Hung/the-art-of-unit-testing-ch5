@@ -1,5 +1,7 @@
 package ch5
 
+import "ch5/er"
+
 type LogAnalyzer struct {
 	webService IWebService
 	emailService IEmailService
@@ -7,7 +9,8 @@ type LogAnalyzer struct {
 
 func (la *LogAnalyzer) Analyze(filename string){
 	if(len(filename) < 8){
-		err := la.webService.LogError("File name too short: " + filename)
+		errorInfo := er.NewErrorInfo("File name too short", filename)
+		err := la.webService.LogError(errorInfo)
 		if err != nil {
 			la.emailService.SendEmail("support@going.cloud","Fake exception!", "Can't Log")
 		}
