@@ -1,29 +1,23 @@
 package ch5
 
 import (
+	"ch5/mocks"
+	"errors"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func Test_TooShortFileNameShouldSendEmail(t *testing.T) {
-	fw := &FakeWebService{}
-	fe := &FakeEmailService{}
-	la := NewLogAnalyzer(fw, fe)
-
-	tooShortFileName := "abc.txt"
-	fw.ShouldThrowError = true;
-	la.Analyze(tooShortFileName)
+	mockWebService := mocks.NewIWebService(t)  // 建立假物件
+	mockEmailService := mocks.NewIEmailService(t)  // 建立假物件
+	la := NewLogAnalyzer(mockWebService, mockEmailService)
+	mockWebService.On("LogError", mock.Anything).Return(errors.New("Fake Exception")).Once()
 	
 	expected_to := "support@going.cloud"
 	expected_body := "Fake exception!"
 	expected_subject := "Can't Log"
-	
-	actual_to := fe.To
-	actual_body := fe.Body
-	actual_subject := fe.Subject
+	mockEmailService.On("SendEmail", expected_to, expected_body, expected_subject).Once()
 
-	assert.Equal(t, expected_to, actual_to, "they should be equal")
-	assert.Equal(t, expected_body, actual_body, "they should be equal")
-	assert.Equal(t, expected_subject, actual_subject, "they should be equal")
+	tooShortFileName := "abc.txt"
+	la.Analyze(tooShortFileName)
 }
