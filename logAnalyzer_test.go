@@ -2,28 +2,32 @@ package ch5
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"errors"
+	"github.com/golang/mock/gomock"
 )
 
 func Test_TooShortFileNameShouldSendEmail(t *testing.T) {
-	fw := &FakeWebService{}
-	fe := &FakeEmailService{}
-	la := NewLogAnalyzer(fw, fe)
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+	mockIWebService := NewMockIWebService(ctl)
+	mockIEmailService := NewMockIEmailService(ctl)
 
-	tooShortFileName := "abc.txt"
-	fw.ShouldThrowError = true;
-	la.Analyze(tooShortFileName)
-	
 	expected_to := "support@going.cloud"
 	expected_body := "Fake exception!"
 	expected_subject := "Can't Log"
-	
-	actual_to := fe.To
-	actual_body := fe.Body
-	actual_subject := fe.Subject
 
-	assert.Equal(t, expected_to, actual_to, "they should be equal")
-	assert.Equal(t, expected_body, actual_body, "they should be equal")
-	assert.Equal(t, expected_subject, actual_subject, "they should be equal")
+	gomock.InOrder(
+		mockIWebService.EXPECT().LogError(gomock.Any()).Return(errors.New("Fake Exception")).
+		Times(1),
+		// MinTimes(1).MaxTimes(10),
+
+		mockIEmailService.EXPECT().SendEmail(expected_to, expected_body, expected_subject).
+		Times(1),
+		// AnyTimes(),
+	)
+
+	la := NewLogAnalyzer(mockIWebService, mockIEmailService)
+
+	tooShortFileName := "abc.txt"
+	la.Analyze(tooShortFileName)
 }
